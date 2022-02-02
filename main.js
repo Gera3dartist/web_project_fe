@@ -4530,7 +4530,13 @@ function _Http_track(router, xhr, tracker)
 			size: event.lengthComputable ? $elm$core$Maybe$Just(event.total) : $elm$core$Maybe$Nothing
 		}))));
 	});
-}var $elm$core$Basics$EQ = {$: 'EQ'};
+}var $author$project$Main$LinkClicked = function (a) {
+	return {$: 'LinkClicked', a: a};
+};
+var $author$project$Main$UrlChanged = function (a) {
+	return {$: 'UrlChanged', a: a};
+};
+var $elm$core$Basics$EQ = {$: 'EQ'};
 var $elm$core$Basics$GT = {$: 'GT'};
 var $elm$core$Basics$LT = {$: 'LT'};
 var $elm$core$List$cons = _List_cons;
@@ -5318,14 +5324,13 @@ var $elm$core$Task$perform = F2(
 			$elm$core$Task$Perform(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
-var $elm$browser$Browser$element = _Browser_element;
-var $author$project$Main$Topic = function (name) {
-	return {name: name};
-};
+var $elm$browser$Browser$application = _Browser_application;
+var $author$project$Main$Login = {$: 'Login'};
 var $author$project$Main$User = F3(
 	function (id, first_name, last_name) {
 		return {first_name: first_name, id: id, last_name: last_name};
 	});
+var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $author$project$Main$GetTopicsCompleted = function (a) {
 	return {$: 'GetTopicsCompleted', a: a};
 };
@@ -6118,44 +6123,217 @@ var $elm$http$Http$get = function (r) {
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
 var $elm$json$Json$Decode$list = _Json_decodeList;
+var $author$project$Main$Topic = function (name) {
+	return {name: name};
+};
 var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$string = _Json_decodeString;
 var $author$project$Main$topicDecoder = A2(
 	$elm$json$Json$Decode$map,
 	$author$project$Main$Topic,
-	A2($elm$json$Json$Decode$field, 'topic', $elm$json$Json$Decode$string));
+	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string));
 var $author$project$Main$topicListDecoder = $elm$json$Json$Decode$list($author$project$Main$topicDecoder);
-var $author$project$Main$fetchTopicsCmd = $elm$http$Http$get(
-	{
-		expect: A2($elm$http$Http$expectJson, $author$project$Main$GetTopicsCompleted, $author$project$Main$topicListDecoder),
-		url: $author$project$Main$api + '/topics'
-	});
-var $author$project$Main$init = function (_v0) {
-	return _Utils_Tuple2(
+var $author$project$Main$fetchTopicsCmd = function (model) {
+	return $elm$http$Http$get(
 		{
-			current_user: A3($author$project$Main$User, 12, 'CHat', 'User'),
-			topics: _List_fromArray(
-				[
-					$author$project$Main$Topic('topic1'),
-					$author$project$Main$Topic('topic2')
-				])
-		},
-		$author$project$Main$fetchTopicsCmd);
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$GetTopicsCompleted, $author$project$Main$topicListDecoder),
+			url: $author$project$Main$api + '/topics'
+		});
 };
-var $elm$core$Platform$Sub$batch = _Platform_batch;
-var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
-var $elm$core$Platform$Cmd$batch = _Platform_batch;
+var $author$project$Main$GetUserTopicsCompleted = function (a) {
+	return {$: 'GetUserTopicsCompleted', a: a};
+};
+var $author$project$Main$fetchUserTopicsCmd = function (model) {
+	return $elm$http$Http$get(
+		{
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$GetUserTopicsCompleted, $author$project$Main$topicListDecoder),
+			url: $author$project$Main$api + ('/users/' + ($elm$core$String$fromInt(model.current_user.id) + '/topics'))
+		});
+};
+var $author$project$Main$GetUsersCompleted = function (a) {
+	return {$: 'GetUsersCompleted', a: a};
+};
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $elm$json$Json$Decode$map3 = _Json_map3;
+var $author$project$Main$userDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$User,
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$int),
+	A2($elm$json$Json$Decode$field, 'first_name', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'last_name', $elm$json$Json$Decode$string));
+var $author$project$Main$userListDecoder = $elm$json$Json$Decode$list($author$project$Main$userDecoder);
+var $author$project$Main$fetchUsersCmd = function (model) {
+	return $elm$http$Http$get(
+		{
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$GetUsersCompleted, $author$project$Main$userListDecoder),
+			url: $author$project$Main$api + '/users'
+		});
+};
+var $author$project$Main$init = F3(
+	function (flags, url, key) {
+		var model = {
+			currentPage: $author$project$Main$Login,
+			currentTopic: 'elm',
+			current_user: A3($author$project$Main$User, 1, 'Joe', 'Armstrong'),
+			draft: '',
+			key: key,
+			messages: _List_Nil,
+			subscribed_topics: _List_Nil,
+			topics: _List_Nil,
+			url: url,
+			users: _List_Nil
+		};
+		return _Utils_Tuple2(
+			model,
+			$elm$core$Platform$Cmd$batch(
+				_List_fromArray(
+					[
+						$author$project$Main$fetchTopicsCmd(model),
+						$author$project$Main$fetchUserTopicsCmd(model),
+						$author$project$Main$fetchUsersCmd(model)
+					])));
+	});
+var $author$project$Main$Recv = function (a) {
+	return {$: 'Recv', a: a};
+};
+var $author$project$Main$messageReceiver = _Platform_incomingPort('messageReceiver', $elm$json$Json$Decode$string);
+var $author$project$Main$subscriptions = function (model) {
+	return $author$project$Main$messageReceiver($author$project$Main$Recv);
+};
+var $author$project$Main$Chat = {$: 'Chat'};
+var $author$project$Main$ChatMessage = F4(
+	function (payload, topic, userid, username) {
+		return {payload: payload, topic: topic, userid: userid, username: username};
+	});
+var $elm$json$Json$Decode$map4 = _Json_map4;
+var $author$project$Main$chatDecoder = A5(
+	$elm$json$Json$Decode$map4,
+	$author$project$Main$ChatMessage,
+	A2($elm$json$Json$Decode$field, 'payload', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'topic', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'userid', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'username', $elm$json$Json$Decode$string));
+var $elm$json$Json$Encode$int = _Json_wrap;
+var $author$project$Main$connectUser = _Platform_outgoingPort('connectUser', $elm$json$Json$Encode$int);
+var $author$project$Main$connectUserSocket = function (user_id) {
+	return $author$project$Main$connectUser(user_id);
+};
+var $author$project$Main$full_name = function (user) {
+	return user.first_name + (' ' + user.last_name);
+};
+var $elm$browser$Browser$Navigation$load = _Browser_load;
+var $elm$core$Debug$log = _Debug_log;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
+var $elm$json$Json$Encode$list = F2(
+	function (func, entries) {
+		return _Json_wrap(
+			A3(
+				$elm$core$List$foldl,
+				_Json_addEntry(func),
+				_Json_emptyArray(_Utils_Tuple0),
+				entries));
+	});
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$Main$sendMessage = _Platform_outgoingPort(
+	'sendMessage',
+	$elm$json$Json$Encode$list($elm$json$Json$Encode$string));
+var $elm$core$Debug$toString = _Debug_toString;
+var $elm$url$Url$addPort = F2(
+	function (maybePort, starter) {
+		if (maybePort.$ === 'Nothing') {
+			return starter;
+		} else {
+			var port_ = maybePort.a;
+			return starter + (':' + $elm$core$String$fromInt(port_));
+		}
+	});
+var $elm$url$Url$addPrefixed = F3(
+	function (prefix, maybeSegment, starter) {
+		if (maybeSegment.$ === 'Nothing') {
+			return starter;
+		} else {
+			var segment = maybeSegment.a;
+			return _Utils_ap(
+				starter,
+				_Utils_ap(prefix, segment));
+		}
+	});
+var $elm$url$Url$toString = function (url) {
+	var http = function () {
+		var _v0 = url.protocol;
+		if (_v0.$ === 'Http') {
+			return 'http://';
+		} else {
+			return 'https://';
+		}
+	}();
+	return A3(
+		$elm$url$Url$addPrefixed,
+		'#',
+		url.fragment,
+		A3(
+			$elm$url$Url$addPrefixed,
+			'?',
+			url.query,
+			_Utils_ap(
+				A2(
+					$elm$url$Url$addPort,
+					url.port_,
+					_Utils_ap(http, url.host)),
+				url.path)));
+};
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
+			case 'DraftChanged':
+				var draft = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{draft: draft}),
+					$elm$core$Platform$Cmd$none);
 			case 'Success':
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 			case 'Subscribe':
 				var topic = msg.a;
 				var user = msg.b;
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-			default:
+			case 'ConnectUser':
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$connectUserSocket(model.current_user.id));
+			case 'Send':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{draft: ''}),
+					$author$project$Main$sendMessage(
+						_List_fromArray(
+							[
+								model.currentTopic,
+								model.draft,
+								$author$project$Main$full_name(model.current_user)
+							])));
+			case 'Recv':
+				var message = msg.a;
+				var _v1 = A2($elm$json$Json$Decode$decodeString, $author$project$Main$chatDecoder, message);
+				if (_v1.$ === 'Ok') {
+					var validMessage = _v1.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								messages: _Utils_ap(
+									model.messages,
+									_List_fromArray(
+										[validMessage]))
+							}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			case 'GetTopicsCompleted':
 				var result = msg.a;
 				if (result.$ === 'Ok') {
 					var newTopics = result.a;
@@ -6167,9 +6345,82 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
+			case 'GetUserTopicsCompleted':
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var userTopics = result.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{subscribed_topics: userTopics}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					var exc = result.a;
+					return A2(
+						$elm$core$Debug$log,
+						'foo bar' + $elm$core$Debug$toString(exc),
+						_Utils_Tuple2(model, $elm$core$Platform$Cmd$none));
+				}
+			case 'LinkClicked':
+				var urlRequest = msg.a;
+				if (urlRequest.$ === 'Internal') {
+					var url = urlRequest.a;
+					return _Utils_Tuple2(
+						model,
+						A2(
+							$elm$browser$Browser$Navigation$pushUrl,
+							model.key,
+							$elm$url$Url$toString(url)));
+				} else {
+					var href = urlRequest.a;
+					return _Utils_Tuple2(
+						model,
+						$elm$browser$Browser$Navigation$load(href));
+				}
+			case 'UrlChanged':
+				var newUrl = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{url: newUrl}),
+					$elm$core$Platform$Cmd$none);
+			case 'GetUsersCompleted':
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var newUsers = result.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{users: newUsers}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					var exc = result.a;
+					return A2(
+						$elm$core$Debug$log,
+						'Problem getting users' + $elm$core$Debug$toString(exc),
+						_Utils_Tuple2(model, $elm$core$Platform$Cmd$none));
+				}
+			default:
+				var user = msg.a;
+				return A2(
+					$elm$core$Debug$log,
+					'Connecting User ' + $elm$core$Debug$toString(user),
+					_Utils_Tuple2(
+						_Utils_update(
+							model,
+							{currentPage: $author$project$Main$Chat, current_user: user}),
+						$author$project$Main$connectUserSocket(user.id)));
 		}
 	});
-var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$Main$pageTemplate = function (body) {
+	return {body: body, title: 'Chat App'};
+};
+var $elm$html$Html$div = _VirtualDom_node('div');
+var $author$project$Main$DraftChanged = function (a) {
+	return {$: 'DraftChanged', a: a};
+};
+var $author$project$Main$Send = {$: 'Send'};
+var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
 		return A2(
@@ -6178,16 +6429,6 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 			$elm$json$Json$Encode$string(string));
 	});
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
-var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $elm$html$Html$ul = _VirtualDom_node('ul');
-var $author$project$Main$Subscribe = F2(
-	function (a, b) {
-		return {$: 'Subscribe', a: a, b: b};
-	});
-var $elm$html$Html$button = _VirtualDom_node('button');
-var $elm$html$Html$li = _VirtualDom_node('li');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -6205,101 +6446,215 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
-var $elm$html$Html$p = _VirtualDom_node('p');
-var $elm$html$Html$span = _VirtualDom_node('span');
-var $author$project$Main$viewTopic = F2(
-	function (currentUser, topic) {
-		return A2(
-			$elm$html$Html$li,
-			_List_Nil,
-			_List_fromArray(
-				[
-					A2(
-					$elm$html$Html$div,
-					_List_Nil,
-					_List_fromArray(
-						[
-							A2(
-							$elm$html$Html$p,
-							_List_fromArray(
-								[
-									$elm$html$Html$Attributes$class('container')
-								]),
-							_List_fromArray(
-								[
-									$elm$html$Html$text(topic.name),
-									A2(
-									$elm$html$Html$span,
-									_List_fromArray(
-										[
-											$elm$html$Html$Attributes$class('topic-button-right')
-										]),
-									_List_fromArray(
-										[
-											A2(
-											$elm$html$Html$button,
-											_List_fromArray(
-												[
-													$elm$html$Html$Events$onClick(
-													A2($author$project$Main$Subscribe, topic, currentUser))
-												]),
-											_List_fromArray(
-												[
-													$elm$html$Html$text('Subscribe')
-												]))
-										]))
-								]))
-						]))
-				]));
-	});
-var $author$project$Main$viewTopicWithUser = function (user) {
-	return $author$project$Main$viewTopic(user);
+var $elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
 };
-var $author$project$Main$view = function (model) {
+var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
+	return {$: 'MayStopPropagation', a: a};
+};
+var $elm$html$Html$Events$stopPropagationOn = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
+	});
+var $elm$json$Json$Decode$at = F2(
+	function (fields, decoder) {
+		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
+	});
+var $elm$html$Html$Events$targetValue = A2(
+	$elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'value']),
+	$elm$json$Json$Decode$string);
+var $elm$html$Html$Events$onInput = function (tagger) {
+	return A2(
+		$elm$html$Html$Events$stopPropagationOn,
+		'input',
+		A2(
+			$elm$json$Json$Decode$map,
+			$elm$html$Html$Events$alwaysStop,
+			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
+};
+var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $elm$html$Html$textarea = _VirtualDom_node('textarea');
+var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
+var $author$project$Main$viewChatControl = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('row')
+				$elm$html$Html$Attributes$class('chat-control')
 			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$textarea,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$placeholder('Draft'),
+						$elm$html$Html$Events$onInput($author$project$Main$DraftChanged),
+						$elm$html$Html$Attributes$value(model.draft),
+						$elm$html$Html$Attributes$class('textarea')
+					]),
+				_List_Nil),
+				A2(
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Events$onClick($author$project$Main$Send),
+						$elm$html$Html$Attributes$class('button')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Send')
+					]))
+			]));
+};
+var $author$project$Main$getMessageClass = F2(
+	function (model, username) {
+		return _Utils_eq(
+			$author$project$Main$full_name(model.current_user),
+			username) ? 'list-item right' : 'list-item left';
+	});
+var $elm$html$Html$span = _VirtualDom_node('span');
+var $author$project$Main$viewChatHistoryRecord = F2(
+	function (model, chatMessage) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class(
+					A2($author$project$Main$getMessageClass, model, chatMessage.username))
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$span,
+					_List_Nil,
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							A2($elm$core$String$left, 2, chatMessage.username))
+						])),
+					$elm$html$Html$text(chatMessage.payload)
+				]));
+	});
+var $author$project$Main$viewChatHistory = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
 		_List_fromArray(
 			[
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('column')
+						$elm$html$Html$Attributes$class('list')
 					]),
+				A2(
+					$elm$core$List$map,
+					$author$project$Main$viewChatHistoryRecord(model),
+					model.messages))
+			]));
+};
+var $author$project$Main$ConnectUser = {$: 'ConnectUser'};
+var $elm$html$Html$Attributes$id = $elm$html$Html$Attributes$stringProperty('id');
+var $elm$html$Html$p = _VirtualDom_node('p');
+var $author$project$Main$viewCurrentUser = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$id(
+				$elm$core$String$fromInt(model.current_user.id))
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$p,
+				_List_Nil,
 				_List_fromArray(
 					[
-						A2(
-						$elm$html$Html$ul,
-						_List_Nil,
-						A2(
-							$elm$core$List$map,
-							$author$project$Main$viewTopicWithUser(model.current_user),
-							model.topics))
+						$elm$html$Html$text(
+						$author$project$Main$full_name(model.current_user))
 					])),
 				A2(
-				$elm$html$Html$div,
+				$elm$html$Html$button,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('column')
+						$elm$html$Html$Events$onClick($author$project$Main$ConnectUser)
 					]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text('some text')
+						$elm$html$Html$text('Connect')
 					]))
 			]));
 };
-var $author$project$Main$main = $elm$browser$Browser$element(
-	{
-		init: $author$project$Main$init,
-		subscriptions: function (_v0) {
-			return $elm$core$Platform$Sub$none;
-		},
-		update: $author$project$Main$update,
-		view: $author$project$Main$view
-	});
+var $author$project$Main$viewChatHistoryPage = function (model) {
+	return _List_fromArray(
+		[
+			A2(
+			$elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					$author$project$Main$viewCurrentUser(model),
+					$author$project$Main$viewChatHistory(model)
+				])),
+			A2(
+			$elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					$author$project$Main$viewChatControl(model)
+				]))
+		]);
+};
+var $author$project$Main$UserLoggedIn = function (a) {
+	return {$: 'UserLoggedIn', a: a};
+};
+var $elm$html$Html$li = _VirtualDom_node('li');
+var $elm$html$Html$ul = _VirtualDom_node('ul');
+var $author$project$Main$viewLoginPage = function (model) {
+	return A2(
+		$elm$html$Html$ul,
+		_List_Nil,
+		A2(
+			$elm$core$List$map,
+			function (user) {
+				return A2(
+					$elm$html$Html$li,
+					_List_fromArray(
+						[
+							$elm$html$Html$Events$onClick(
+							$author$project$Main$UserLoggedIn(user))
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							$author$project$Main$full_name(user))
+						]));
+			},
+			model.users));
+};
+var $author$project$Main$view = function (model) {
+	var _v0 = model.currentPage;
+	if (_v0.$ === 'Login') {
+		return $author$project$Main$pageTemplate(
+			_List_fromArray(
+				[
+					$author$project$Main$viewLoginPage(model)
+				]));
+	} else {
+		return $author$project$Main$pageTemplate(
+			$author$project$Main$viewChatHistoryPage(model));
+	}
+};
+var $author$project$Main$main = $elm$browser$Browser$application(
+	{init: $author$project$Main$init, onUrlChange: $author$project$Main$UrlChanged, onUrlRequest: $author$project$Main$LinkClicked, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
 	$elm$json$Json$Decode$succeed(_Utils_Tuple0))(0)}});}(this));
